@@ -123,17 +123,19 @@
             }
             $status.html(statusHTML);
         }
-
+        
         // 初始化棋盤設定
         var config = {
             draggable: true,
             position: 'start',
             onDragStart: onDragStart,
             onDrop: onDrop,
-            onSnapEnd: onSnapEnd
+            onSnapEnd: onSnapEnd,
+            // 👇 💡 關鍵修復在這裡！直接告訴程式去雲端圖庫抓棋子的圖片
+            pieceTheme: 'https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/img/chesspieces/wikipedia/{piece}.png'
         };
         board = Chessboard('myBoard', config);
-
+        
         updateStatus();
 
         // 綁定「重新開始遊戲」按鈕
