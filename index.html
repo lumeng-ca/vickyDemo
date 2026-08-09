@@ -4,52 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vicky 的專屬西洋棋</title>
-    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css" integrity="sha384-q94+BZtLrkL1/ohOuzBXS4cZBv053b9x3s/K3bWhcc3/B0XG1u6F0OizYc3o6kRz" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
     <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            background-color: #f4f4f9;
-            margin: 0;
-            padding: 30px 20px;
-        }
-        h1 { 
-            color: #2c3e50; 
-            margin-bottom: 5px;
-        }
-        #status { 
-            font-size: 18px;
-            font-weight: bold; 
-            margin-bottom: 20px; 
-            color: #34495e; 
-            min-height: 24px;
-        }
-        #myBoard {
-            width: 400px;
-            margin-bottom: 25px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-            border-radius: 4px;
-        }
-        .controls button {
-            padding: 12px 24px;
-            font-size: 16px;
-            cursor: pointer;
-            background-color: #27ae60;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: background-color 0.3s, transform 0.1s;
-        }
-        .controls button:hover { 
-            background-color: #2ecc71; 
-        }
-        .controls button:active {
-            transform: translateY(2px);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
+        body { font-family: 'Arial', sans-serif; display: flex; flex-direction: column; align-items: center; background-color: #f4f4f9; margin: 0; padding: 30px 20px; }
+        h1 { color: #2c3e50; margin-bottom: 5px; }
+        #status { font-size: 18px; font-weight: bold; margin-bottom: 20px; color: #34495e; min-height: 24px; }
+        #myBoard { width: 400px; margin-bottom: 25px; box-shadow: 0 8px 16px rgba(0,0,0,0.2); border-radius: 4px; }
+        .controls button { padding: 12px 24px; font-size: 16px; cursor: pointer; background-color: #27ae60; color: white; border: none; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: background-color 0.3s, transform 0.1s; }
+        .controls button:hover { background-color: #2ecc71; }
+        .controls button:active { transform: translateY(2px); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
@@ -62,87 +25,60 @@
     </div>
 
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js" integrity="sha384-8Vi8VHwn3vjQ9eUHUxex3Jv/q/TIEElo+CPa91y3c2QeIwsS4AOPJcEltA1w9xTq" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.2/chess.js" integrity="sha384-s3XgLpvmHyscVpijnG/qG34R2j8gq04AOKs0K93eLxaqYlO9X51S5K43F/J82sK6" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.2/chess.js"></script>
 
     <script>
         var board = null;
         var game = new Chess();
         var $status = $('#status');
 
-        // 當玩家開始拖曳棋子時的檢查
         function onDragStart (source, piece, position, orientation) {
-            // 如果遊戲已經結束，或者不是該玩家的回合，則禁止拖曳
-            if (game.game_over() ||
-               (game.turn() === 'w' && piece.search(/^b/) !== -1) ||
-               (game.turn() === 'b' && piece.search(/^w/) !== -1)) {
+            if (game.game_over() || (game.turn() === 'w' && piece.search(/^b/) !== -1) || (game.turn() === 'b' && piece.search(/^w/) !== -1)) {
                 return false;
             }
         }
 
-        // 當玩家放下棋子時的邏輯判斷
         function onDrop (source, target) {
-            // 透過 chess.js 檢查移動是否合法
-            var move = game.move({
-                from: source,
-                to: target,
-                promotion: 'q' // 若兵走到底線，預設升變為皇后 (Queen)
-            });
-
-            // 如果移動不合法，把棋子彈回原位
+            var move = game.move({ from: source, to: target, promotion: 'q' });
             if (move === null) return 'snapback';
-
             updateStatus();
         }
 
-        // 當棋盤動畫結束後，重新同步內部邏輯與畫面
-        function onSnapEnd () {
-            board.position(game.fen());
-        }
+        function onSnapEnd () { board.position(game.fen()); }
 
-        // 更新畫面上的遊戲狀態文字
         function updateStatus () {
             var statusHTML = '';
             var moveColor = (game.turn() === 'b') ? '黑方' : '白方';
-
-            // 檢查是否被將死 (Checkmate)
-            if (game.in_checkmate()) {
-                statusHTML = '遊戲結束，' + moveColor + ' 被將死了！🏆';
-            }
-            // 檢查是否逼和 (Draw)
-            else if (game.in_draw()) {
-                statusHTML = '遊戲結束，平手！🤝';
-            }
-            // 遊戲繼續
+            if (game.in_checkmate()) { statusHTML = '遊戲結束，' + moveColor + ' 被將死了！🏆'; }
+            else if (game.in_draw()) { statusHTML = '遊戲結束，平手！🤝'; }
             else {
                 statusHTML = '輪到 ' + moveColor + ' 下棋';
-                // 檢查是否被將軍 (Check)
-                if (game.in_check()) {
-                    statusHTML += ' <span style="color:#e74c3c;">(將軍！)</span>';
-                }
+                if (game.in_check()) { statusHTML += ' <span style="color:#e74c3c;">(將軍！)</span>'; }
             }
             $status.html(statusHTML);
         }
-        
-        // 初始化棋盤設定
+
         var config = {
             draggable: true,
             position: 'start',
             onDragStart: onDragStart,
             onDrop: onDrop,
             onSnapEnd: onSnapEnd,
-            // 👇 💡 關鍵修復在這裡！直接告訴程式去雲端圖庫抓棋子的圖片
+            // 直接指定雲端棋子圖片
             pieceTheme: 'https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/img/chesspieces/wikipedia/{piece}.png'
         };
-        board = Chessboard('myBoard', config);
-        
-        updateStatus();
 
-        // 綁定「重新開始遊戲」按鈕
-        $('#startBtn').on('click', function () {
-            game.reset();
-            board.start();
+        // 加入保險機制：確保網頁元素都準備好才畫棋盤
+        $(document).ready(function() {
+            board = Chessboard('myBoard', config);
             updateStatus();
+            
+            $('#startBtn').on('click', function () {
+                game.reset();
+                board.start();
+                updateStatus();
+            });
         });
     </script>
 </body>
